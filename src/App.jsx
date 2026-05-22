@@ -7,7 +7,7 @@ import SummaryHeader from './components/SummaryHeader.jsx';
 import FilterDrawer from './components/FilterDrawer.jsx';
 import MapPanel from './components/MapPanel.jsx';
 import ChartsPanel from './components/ChartsPanel.jsx';
-import StoryScrubber, { CHAPTERS, useBarkMode, BarkBanner } from './components/StoryScrubber.jsx';
+import StoryScrubber, { CHAPTERS } from './components/StoryScrubber.jsx';
 import TimelinePanel from './components/TimelinePanel.jsx';
 
 const DEFAULT_EXPIRATION_YEAR = 2027;
@@ -172,7 +172,6 @@ export default function App() {
     setTimeout(() => setCompanionMsg(null), 4500);
   }, []);
 
-  const bark = useBarkMode(applyChapter, setChapter);
 
   const activeFiltersLabel = useMemo(() => {
     const bits = [];
@@ -206,7 +205,6 @@ export default function App() {
         year={filters.expirationYear}
         activeFilters={activeFiltersLabel}
         onFetchInsights={onFetchInsights}
-        onBarkMode={bark.active ? bark.stop : bark.start}
       />
 
       <main className="main">
@@ -241,7 +239,6 @@ export default function App() {
         </div>
       </main>
 
-      <BarkBanner bark={bark} setChapter={setChapter} applyChapter={applyChapter} />
     </div>
   );
 }

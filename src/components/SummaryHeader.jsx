@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function SummaryHeader({ stats, baseline, year, activeFilters, onFetchInsights, onBarkMode }) {
+export default function SummaryHeader({ stats, baseline, year, activeFilters, onFetchInsights }) {
   const fmt = (n) => (n == null ? '—' : n.toLocaleString());
   return (
     <header className="header">
@@ -18,7 +18,6 @@ export default function SummaryHeader({ stats, baseline, year, activeFilters, on
         <Stat label="Active filters"     value={activeFilters || 'None'} />
       </div>
       <div className="header-actions">
-        <button className="btn" onClick={onBarkMode}>▶ Auto-tour</button>
         <button className="btn primary" onClick={onFetchInsights}>↻ Refresh</button>
       </div>
     </header>

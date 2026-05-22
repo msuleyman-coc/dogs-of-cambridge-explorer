@@ -59,8 +59,7 @@ export default function StoryScrubber({ chapter, setChapter, applyChapter }) {
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8 }}>
         Each preset applies a fixed combination of filters and chart settings.
-        Use the buttons above, or press “Auto-tour” in the header to step
-        through them automatically.
+        Use the buttons above to step through them.
       </div>
     </div>
   );
