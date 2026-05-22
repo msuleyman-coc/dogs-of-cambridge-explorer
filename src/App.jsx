@@ -7,7 +7,6 @@ import SummaryHeader from './components/SummaryHeader.jsx';
 import FilterDrawer from './components/FilterDrawer.jsx';
 import MapPanel from './components/MapPanel.jsx';
 import ChartsPanel from './components/ChartsPanel.jsx';
-import DogCompanion from './components/DogCompanion.jsx';
 import StoryScrubber, { CHAPTERS, useBarkMode, BarkBanner } from './components/StoryScrubber.jsx';
 import TimelinePanel from './components/TimelinePanel.jsx';
 
@@ -196,12 +195,7 @@ export default function App() {
     );
   }
   if (!loaded) {
-    return (
-      <>
-        <LoadingScreen count={loadedCount} />
-        <DogCompanion state="loading" />
-      </>
-    );
+    return <LoadingScreen count={loadedCount} />;
   }
 
   return (
@@ -247,7 +241,6 @@ export default function App() {
         </div>
       </main>
 
-      <DogCompanion state={companion} message={companionMsg} />
       <BarkBanner bark={bark} setChapter={setChapter} applyChapter={applyChapter} />
     </div>
   );
