@@ -1,15 +1,70 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, Circle, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { CAMBRIDGE_CENTER, NEIGHBORHOODS } from '../data/location.js';
-import { densityCells } from '../data/insights.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, GeoJSON, Tooltip as LTooltip } from 'react-leaflet';
+import { CAMBRIDGE_CENTER, NEIGHBORHOODS_GEOJSON_URL } from '../data/location.js';
 
-// Cap rendered markers in pinpoint mode for snappy interaction
-const MARKER_CAP = 1500;
+// Choropleth map: shade each Cambridge neighborhood polygon by the count
+// of filtered dogs whose `neighborhood` field matches the polygon's name.
+//
+// Polygons come from the City of Cambridge open data portal at runtime.
+// Counts come directly from filtered Dogs of Cambridge records; no values
+// are synthesized.
 
-const TIER_COLOR = { common: '#67e8a4', uncommon: '#ffcf6b', rare: '#ff8aa0', unknown: '#7cc7ff' };
+export default function MapPanel({ dogs }) {
+  const [geo, setGeo] = useState(null);
+  const [geoError, setGeoError] = useState(null);
 
-export default function MapPanel({ dogs, mode, colorBy = 'tier' }) {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(NEIGHBORHOODS_GEOJSON_URL);
+        if (!res.ok) throw new Error(`Neighborhood polygons fetch failed: ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setGeo(toFeatureCollection(data));
+      } catch (e) {
+        if (!cancelled) setGeoError(e.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Count dogs per neighborhood from the filtered set.
+  const counts = useMemo(() => {
+    const m = new Map();
+    for (const d of dogs) {
+      if (!d.neighborhood) continue;
+      m.set(d.neighborhood, (m.get(d.neighborhood) || 0) + 1);
+    }
+    return m;
+  }, [dogs]);
+
+  const maxCount = useMemo(
+    () => [...counts.values()].reduce((m, v) => Math.max(m, v), 0),
+    [counts]
+  );
+
+  const style = (feature) => {
+    const name = neighborhoodName(feature);
+    const c = counts.get(name) || 0;
+    const t = maxCount > 0 ? c / maxCount : 0;
+    return {
+      color: '#0b1424',
+      weight: 1,
+      fillColor: shade(t),
+      fillOpacity: c > 0 ? 0.55 + t * 0.35 : 0.08
+    };
+  };
+
+  const onEachFeature = (feature, layer) => {
+    const name = neighborhoodName(feature) || 'Unknown';
+    const c = counts.get(name) || 0;
+    layer.bindTooltip(
+      `<div style="font-weight:600">${name}</div>
+       <div>${c.toLocaleString()} matching dog${c === 1 ? '' : 's'}</div>`,
+      { sticky: true, opacity: 0.95, className: 'nb-tooltip' }
+    );
+  };
+
   return (
     <div className="panel map-wrap">
       <MapContainer center={CAMBRIDGE_CENTER} zoom={13} scrollWheelZoom>
@@ -17,127 +72,99 @@ export default function MapPanel({ dogs, mode, colorBy = 'tier' }) {
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; OpenStreetMap &copy; CARTO'
         />
-        {mode === 'pinpoint' ? <PinpointLayer dogs={dogs} colorBy={colorBy} /> : <DensityLayer dogs={dogs} />}
-        <NeighborhoodAnchors />
+        {geo && (
+          <GeoJSON
+            // Re-render when counts change so style() picks up new values.
+            key={`geo-${maxCount}-${counts.size}-${dogs.length}`}
+            data={geo}
+            style={style}
+            onEachFeature={onEachFeature}
+          />
+        )}
       </MapContainer>
-      {mode === 'pinpoint' && <Legend colorBy={colorBy} />}
-      <div className="map-note">
-        ⚠️ Approximate visualization — the public Dogs of Cambridge dataset does not include
-        addresses or coordinates. Each pin is a deterministic placement inside the dog's
-        likely neighborhood, intended only for exploratory visualization.
+
+      <ChoroplethLegend max={maxCount} />
+
+      {geoError && (
+        <div className="map-note" style={{ color: 'var(--sad)' }}>
+          Couldn’t load Cambridge neighborhood polygons ({geoError}). The base
+          map is still shown; reload to retry.
+        </div>
+      )}
+      {!geoError && (
+        <div className="map-note">
+          Neighborhood polygons: City of Cambridge open data
+          (<code>k3pi-9823</code>). Counts: filtered Dogs of Cambridge records
+          (<code>h7p5-fjms</code>); coordinates are city-published geomasked
+          approximations.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChoroplethLegend({ max }) {
+  if (!max) {
+    return (
+      <div className="map-legend">
+        <div style={{ fontWeight: 600 }}>Dogs per neighborhood</div>
+        <div style={{ color: 'var(--text-dim)' }}>No dogs match the current filters.</div>
+      </div>
+    );
+  }
+  const stops = [0, 0.25, 0.5, 0.75, 1];
+  return (
+    <div className="map-legend">
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>Dogs per neighborhood</div>
+      <div style={{
+        display: 'flex', height: 10, borderRadius: 4, overflow: 'hidden',
+        background: 'linear-gradient(90deg,' +
+          stops.map((s) => shade(s)).join(',') + ')'
+      }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-dim)' }}>
+        <span>0</span>
+        <span>{Math.round(max / 2).toLocaleString()}</span>
+        <span>{max.toLocaleString()}</span>
       </div>
     </div>
   );
 }
 
-function NeighborhoodAnchors() {
-  return NEIGHBORHOODS.map((n) => (
-    <Circle key={n.name} center={[n.lat, n.lng]} radius={50}
-      pathOptions={{ color: 'rgba(255,180,84,0.4)', fillOpacity: 0.6 }} />
-  ));
+// Cambridge neighborhood polygons expose the name under one of a few
+// property keys depending on which extract is served. Try them all.
+function neighborhoodName(feature) {
+  const p = feature.properties || {};
+  return p.name || p.neighborhood_name || p.neighborhood || p.NAME || p.NBHD || null;
 }
 
-function colorFor(d, colorBy) {
-  if (colorBy === 'gender') {
-    if (d.gender === 'Female') return '#ff8aa0';
-    if (d.gender === 'Male') return '#7cc7ff';
-    return '#c39bff';
+// Socrata's `.geojson` endpoint returns a FeatureCollection directly, but
+// some legacy backends return a bare array of features.
+function toFeatureCollection(data) {
+  if (data && data.type === 'FeatureCollection') return data;
+  if (Array.isArray(data)) return { type: 'FeatureCollection', features: data };
+  return { type: 'FeatureCollection', features: [] };
+}
+
+// Sequential blue → orange → red ramp, t in [0, 1].
+function shade(t) {
+  const stops = [
+    [0.00, [44, 62, 95]],     // deep slate (low/empty)
+    [0.25, [124, 199, 255]],  // cool blue
+    [0.55, [255, 207, 107]],  // amber
+    [0.80, [255, 138, 76]],   // orange
+    [1.00, [255, 92, 138]]    // hot pink-red
+  ];
+  for (let i = 1; i < stops.length; i++) {
+    const [t1, c1] = stops[i - 1];
+    const [t2, c2] = stops[i];
+    if (t <= t2) {
+      const f = (t - t1) / (t2 - t1 || 1);
+      const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
+      const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
+      const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
+      return `rgb(${r},${g},${b})`;
+    }
   }
-  return TIER_COLOR[d.tier || 'unknown'];
-}
-
-function Legend({ colorBy }) {
-  const items = colorBy === 'gender'
-    ? [['Female', '#ff8aa0'], ['Male', '#7cc7ff'], ['Other/Unknown', '#c39bff']]
-    : [['Common', TIER_COLOR.common], ['Uncommon', TIER_COLOR.uncommon], ['Rare', TIER_COLOR.rare]];
-  return (
-    <div className="map-legend">
-      <div style={{ fontWeight: 600, marginBottom: 2 }}>Color: {colorBy}</div>
-      {items.map(([label, color]) => (
-        <div className="row" key={label}>
-          <span className="swatch" style={{ background: color }} />{label}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PinpointLayer({ dogs, colorBy }) {
-  const subset = useMemo(() => dogs.slice(0, MARKER_CAP), [dogs]);
-  return (
-    <>
-      {subset.map((d) => {
-        const c = colorFor(d, colorBy);
-        return (
-        <CircleMarker
-          key={d.id}
-          center={[d.lat, d.lng]}
-          radius={5}
-          pathOptions={{
-            color: c, weight: 1, fillColor: c, fillOpacity: 0.85
-          }}
-        >
-          <Popup>
-            <div className="popup-card">
-              <div className="name">🐕 {d.name || 'Unnamed pup'}</div>
-              <div className="breed">{d.breed || 'Breed unknown'}</div>
-              <div style={{ marginTop: 4, fontSize: 12 }}>
-                {d.gender && <span>{d.gender}</span>}
-                {d.birthYear && <span> · born {d.birthYear}</span>}
-              </div>
-              <div className="approx">
-                ~ {d.neighborhood} · approximate location
-              </div>
-            </div>
-          </Popup>
-        </CircleMarker>
-      );})}
-      {dogs.length > MARKER_CAP && <RenderCapBadge total={dogs.length} shown={MARKER_CAP} />}
-    </>
-  );
-}
-
-function RenderCapBadge({ total, shown }) {
-  const map = useMap();
-  const ref = useRef(null);
-  useEffect(() => {
-    const ctrl = L.control({ position: 'topright' });
-    ctrl.onAdd = () => {
-      const div = L.DomUtil.create('div');
-      div.style.cssText = 'background:rgba(15,22,36,0.7);border:1px solid rgba(255,255,255,0.1);padding:6px 10px;border-radius:10px;font-size:11px;color:#cdd6e8';
-      div.innerHTML = `Rendering ${shown.toLocaleString()} of ${total.toLocaleString()} pins — switch to density to see all.`;
-      return div;
-    };
-    ctrl.addTo(map);
-    ref.current = ctrl;
-    return () => ctrl.remove();
-  }, [map, total, shown]);
-  return null;
-}
-
-function DensityLayer({ dogs }) {
-  const cells = useMemo(() => densityCells(dogs, 0.003), [dogs]);
-  const max = cells.reduce((m, c) => Math.max(m, c.count), 1);
-  return cells.map((c, i) => {
-    const t = c.count / max;
-    const color = lerpColor('#7cc7ff', '#ff5c8a', t);
-    return (
-      <Circle key={i} center={[c.lat, c.lng]} radius={140 + t * 220}
-        pathOptions={{ color, fillColor: color, fillOpacity: 0.35 + t * 0.45, weight: 0 }}>
-        <Popup>{c.count} dogs near here (approx.)</Popup>
-      </Circle>
-    );
-  });
-}
-
-function lerpColor(a, b, t) {
-  const pa = hex(a), pb = hex(b);
-  const r = Math.round(pa[0] + (pb[0] - pa[0]) * t);
-  const g = Math.round(pa[1] + (pb[1] - pa[1]) * t);
-  const bl = Math.round(pa[2] + (pb[2] - pa[2]) * t);
-  return `rgb(${r},${g},${bl})`;
-}
-function hex(c) {
-  const v = c.replace('#', '');
-  return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  const [, c] = stops[stops.length - 1];
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
 }

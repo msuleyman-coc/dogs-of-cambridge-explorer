@@ -76,15 +76,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---------- Main grid ---------- */
 .main {
   display: grid;
-  grid-template-columns: 320px 1fr 360px;
+  grid-template-columns: 320px 1fr;
   gap: 12px;
   padding: 12px;
   min-height: 0;
 }
-@media (max-width: 1200px) {
-  .main { grid-template-columns: 280px 1fr; }
-  .right-col { display: none; }
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
 }
+
+/* Right column: map and charts share the vertical space evenly so neither
+   panel overwhelms the other. Each panel scrolls its own overflow. */
+.col > .map-wrap { flex: 1 1 0; min-height: 340px; }
+.col > .panel.charts-panel { flex: 1 1 0; min-height: 320px; }
 
 .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
@@ -176,6 +180,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (max-width: 1400px) { .chart-grid { grid-template-columns: 1fr; } }
 .chart-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
 .chart-card h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.6px; }
+.chart-card .recharts-responsive-container { width: 100% !important; }
 
 /* ---------- Dog companion ---------- */
 .dog-companion {
@@ -266,12 +271,21 @@ input[type=range]::-moz-range-thumb {
 /* map legend */
 .map-legend {
   position: absolute; top: 12px; right: 12px; z-index: 500;
-  background: rgba(15,22,36,0.7); border: 1px solid var(--border);
+  min-width: 180px;
+  background: rgba(15,22,36,0.78); border: 1px solid var(--border);
   border-radius: 10px; padding: 8px 10px; font-size: 11px;
   backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 4px;
 }
 .map-legend .row { display: flex; align-items: center; gap: 6px; }
 .map-legend .swatch { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Neighborhood tooltip on the choropleth */
+.leaflet-tooltip.nb-tooltip {
+  background: rgba(15,22,36,0.92); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 8px; font-size: 12px; box-shadow: var(--shadow);
+}
+.leaflet-tooltip.nb-tooltip::before { border-top-color: rgba(15,22,36,0.92); }
 
 /* leaflet dark overrides */
 .leaflet-popup-content-wrapper { border-radius: 14px !important; }

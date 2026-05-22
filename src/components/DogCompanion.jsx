@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 // Tiny SVG dog companion with several emotional states.
+// Hidden during the resting `idle` state (with no message) so it never
+// covers the dashboard. It surfaces only while loading, while a transient
+// message is being shown, or in the "no-results" / "thinking" / "excited"
+// states triggered by user actions.
 export default function DogCompanion({ state = 'idle', message }) {
   const [bark, setBark] = useState(false);
   useEffect(() => {
@@ -10,6 +14,8 @@ export default function DogCompanion({ state = 'idle', message }) {
       return () => clearTimeout(t);
     }
   }, [state]);
+
+  if (state === 'idle' && !message && !bark) return null;
 
   const eye = state === 'no-results' ? 'sad' :
               state === 'thinking'  ? 'thinking' :

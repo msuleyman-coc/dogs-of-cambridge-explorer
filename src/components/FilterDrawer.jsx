@@ -65,23 +65,13 @@ export default function FilterDrawer({ filters, setFilters, breeds, neighborhood
         </div>
 
         <div className="filter-group">
-          <label>Area (approx. neighborhood)</label>
+          <label>Neighborhood</label>
           <div className="chip-row">
             {neighborhoods.map((n) => (
               <span key={n}
                 className={'chip chip-toggle ' + (filters.neighborhoods.has(n) ? 'active' : '')}
                 onClick={() => toggleNb(n)}>{n}</span>
             ))}
-          </div>
-        </div>
-
-        <div className="filter-group">
-          <label>Map mode</label>
-          <div className="chip-row">
-            <span className={'chip chip-toggle ' + (filters.mapMode === 'pinpoint' ? 'active' : '')}
-                  onClick={() => setFilters({ ...filters, mapMode: 'pinpoint' })}>📍 Pinpoint</span>
-            <span className={'chip chip-toggle ' + (filters.mapMode === 'density' ? 'active' : '')}
-                  onClick={() => setFilters({ ...filters, mapMode: 'density' })}>🌡 Density</span>
           </div>
         </div>
 
@@ -96,20 +86,9 @@ export default function FilterDrawer({ filters, setFilters, breeds, neighborhood
           </div>
         </div>
 
-        <div className="filter-group">
-          <label>Color markers by</label>
-          <div className="chip-row">
-            {['tier', 'gender'].map((m) => (
-              <span key={m}
-                className={'chip chip-toggle ' + (filters.colorBy === m ? 'active' : '')}
-                onClick={() => setFilters({ ...filters, colorBy: m })}>{m}</span>
-            ))}
-          </div>
-        </div>
-
         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <button className="btn danger" onClick={onReset}>Reset</button>
-          <button className="btn" onClick={onSurprise}>🎲 Surprise me</button>
+          <button className="btn danger" onClick={onReset}>Reset filters</button>
+          <button className="btn" onClick={onSurprise}>🎲 Random breed</button>
         </div>
       </div>
     </div>

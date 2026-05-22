@@ -16,7 +16,7 @@ export default function ChartsPanel({ stats, baselineStats, metric, dogs }) {
   const dataNames = useMemo(() => transform(topNames, metric, stats.total, baselineStats, 'name'), [topNames, metric, stats.total, baselineStats]);
 
   return (
-    <div className="panel" style={{ flex: 1 }}>
+    <div className="panel charts-panel">
       <h3>Charts & Insights</h3>
       <div className="scroll">
         <div className="chart-grid">
@@ -41,7 +41,7 @@ export default function ChartsPanel({ stats, baselineStats, metric, dogs }) {
           </Card>
         </div>
 
-        <Card title="🐾 Dog name wall (top 40)" style={{ marginTop: 12 }}>
+        <Card title="Top dog names (top 40)" style={{ marginTop: 12 }}>
           <div className="name-wall">
             {stats.nameCounts.slice(0, 40).map((n) => (
               <span className="nm" key={n.label}>{n.label}<strong>{n.count}</strong></span>
@@ -50,7 +50,7 @@ export default function ChartsPanel({ stats, baselineStats, metric, dogs }) {
           </div>
         </Card>
 
-        <Card title="🛏 Kennel View — grouped summary" style={{ marginTop: 12 }}>
+        <Card title="Breed summary" style={{ marginTop: 12 }}>
           <div className="row-cards">
             {stats.breedCounts.slice(0, 8).map((b) => (
               <div className="row-card" key={b.label}>

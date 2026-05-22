@@ -1,54 +1,50 @@
 import React, { useEffect, useState } from 'react';
 
-// Story chapters used by both the Story Scrubber and Bark Mode.
-// Each chapter mutates filters via `apply` and provides Scout narration.
+// Preset views used by both the Preset Views panel and the Auto-tour banner.
+// Each preset mutates filters via `apply` and shows a short description.
+
 export const CHAPTERS = [
   {
     title: 'Most common breeds',
-    narration: "Let's start with Cambridge's most popular dog breeds — the city's bread and butter.",
-    apply: (f) => ({ ...f, tiers: new Set(['common']), chartMetric: 'count', mapMode: 'pinpoint' })
+    narration: "Cambridge's most popular dog breeds.",
+    apply: (f) => ({ ...f, tiers: new Set(['common']), chartMetric: 'count' })
   },
   {
     title: 'Most common names',
-    narration: 'Now the city\'s favorite dog names — Bella, Luna, and friends.',
+    narration: 'The city\'s most popular dog names.',
     apply: (f) => ({ ...f, tiers: new Set(['common', 'uncommon', 'rare']), chartMetric: 'count' })
   },
   {
     title: 'Rare breeds',
-    narration: 'Let\'s sniff out the unusual — breeds with only a handful of dogs in town.',
-    apply: (f) => ({ ...f, tiers: new Set(['rare']), chartMetric: 'count', mapMode: 'pinpoint' })
+    narration: 'Breeds with only a handful of dogs in town.',
+    apply: (f) => ({ ...f, tiers: new Set(['rare']), chartMetric: 'count' })
   },
   {
     title: 'Breed diversity',
-    narration: 'How diverse is each part of town? Shannon diversity at a glance.',
+    narration: 'Breed diversity by neighborhood (Shannon index).',
     apply: (f) => ({ ...f, tiers: new Set(['common', 'uncommon', 'rare']), chartMetric: 'diversity' })
   },
   {
-    title: 'Density hotspots',
-    narration: 'Switching to density mode to find where Cambridge dogs cluster.',
-    apply: (f) => ({ ...f, mapMode: 'density', tiers: new Set(['common', 'uncommon', 'rare']) })
+    title: 'Mixed-breed dogs',
+    narration: 'Mixed and designer breeds.',
+    apply: (f) => ({ ...f, breedSearch: 'mix' })
   },
   {
-    title: 'Mixed breed spotlight',
-    narration: 'Cambridge loves a good mutt. Here are the mixed and designer breeds.',
-    apply: (f) => ({ ...f, breedSearch: 'mix', mapMode: 'pinpoint' })
-  },
-  {
-    title: 'Name twins',
-    narration: 'Dogs sharing the same name — the canine namesakes.',
+    title: 'Repeat names',
+    narration: 'Dogs sharing the same name.',
     apply: (f) => ({ ...f, breedSearch: '', chartMetric: 'count' })
   },
   {
-    title: 'Surprise insight',
-    narration: 'And finally — a surprise slice of Cambridge canine life.',
-    apply: (f) => ({ ...f, breedSearch: '', tiers: new Set(['uncommon']), mapMode: 'density' })
+    title: 'Uncommon breeds',
+    narration: 'A slice of less-common Cambridge dogs.',
+    apply: (f) => ({ ...f, breedSearch: '', tiers: new Set(['uncommon']) })
   }
 ];
 
 export default function StoryScrubber({ chapter, setChapter, applyChapter }) {
   return (
     <div className="panel">
-      <h3>📖 Story Scrubber</h3>
+      <h3>🔖 Preset views</h3>
       <div className="scrubber">
         <button className="btn" onClick={() => { const i = Math.max(0, chapter - 1); setChapter(i); applyChapter(i); }}>◀</button>
         <input
@@ -58,17 +54,19 @@ export default function StoryScrubber({ chapter, setChapter, applyChapter }) {
         <button className="btn" onClick={() => { const i = Math.min(CHAPTERS.length - 1, chapter + 1); setChapter(i); applyChapter(i); }}>▶</button>
       </div>
       <div style={{ marginTop: 8 }}>
-        <div className="chapter-title">Ch. {chapter + 1} · {CHAPTERS[chapter].title}</div>
+        <div className="chapter-title">View {chapter + 1} of {CHAPTERS.length}: {CHAPTERS[chapter].title}</div>
         <div style={{ color: 'var(--text-dim)', fontSize: 12, marginTop: 4 }}>{CHAPTERS[chapter].narration}</div>
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8 }}>
-        Note: this dataset has no meaningful event date for a timeline, so chapters move
-        through the data story instead.
+        Each preset applies a fixed combination of filters and chart settings.
+        Use the buttons above, or press “Auto-tour” in the header to step
+        through them automatically.
       </div>
     </div>
   );
 }
 
+// Auto-tour: walks through the preset views on a timer.
 export function useBarkMode(applyChapter, setChapter) {
   const [active, setActive] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -91,14 +89,14 @@ export function useBarkMode(applyChapter, setChapter) {
   return { active, paused, speed, i, start, stop, setPaused, setSpeed };
 }
 
-export function BarkBanner({ bark, setChapter, applyChapter }) {
+export function BarkBanner({ bark }) {
   if (!bark.active) return null;
   return (
     <div className="bark-banner">
-      <span>🎬 Bark Mode · Ch. {bark.i + 1}/{CHAPTERS.length}: {CHAPTERS[bark.i].title}</span>
+      <span>Auto-tour · View {bark.i + 1}/{CHAPTERS.length}: {CHAPTERS[bark.i].title}</span>
       <button className="btn" onClick={() => bark.setPaused(!bark.paused)}>{bark.paused ? '▶ Resume' : '⏸ Pause'}</button>
-      <button className="btn" onClick={() => bark.setSpeed(bark.speed === 1 ? 2 : bark.speed === 2 ? 0.5 : 1)}>{bark.speed}×</button>
-      <button className="btn danger" onClick={bark.stop}>Exit</button>
+      <button className="btn" onClick={() => bark.setSpeed(bark.speed === 1 ? 2 : bark.speed === 2 ? 0.5 : 1)}>{bark.speed}× speed</button>
+      <button className="btn danger" onClick={bark.stop}>Stop</button>
     </div>
   );
 }
