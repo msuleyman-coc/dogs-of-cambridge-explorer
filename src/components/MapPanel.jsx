@@ -48,8 +48,9 @@ export default function MapPanel({ dogs }) {
     const c = counts.get(name) || 0;
     const t = maxCount > 0 ? c / maxCount : 0;
     return {
-      color: '#7a1f1f',
-      weight: 1,
+      color: '#3b0a0a',
+      weight: 2,
+      opacity: 0.9,
       fillColor: shade(t),
       // Opacity scales with density too, so high-count areas read as a
       // clearly darker red against the light basemap.
@@ -60,11 +61,20 @@ export default function MapPanel({ dogs }) {
   const onEachFeature = (feature, layer) => {
     const name = neighborhoodName(feature) || 'Unknown';
     const c = counts.get(name) || 0;
-    layer.bindTooltip(
+    // Always-visible name label, centered on each polygon.
+    layer.bindTooltip(name, {
+      permanent: true,
+      direction: 'center',
+      className: 'nb-label',
+      opacity: 1
+    });
+    // Hover tooltip with the count.
+    layer.bindPopup(
       `<div style="font-weight:600">${name}</div>
-       <div>${c.toLocaleString()} matching dog${c === 1 ? '' : 's'}</div>`,
-      { sticky: true, opacity: 0.95, className: 'nb-tooltip' }
+       <div>${c.toLocaleString()} matching dog${c === 1 ? '' : 's'}</div>`
     );
+    layer.on('mouseover', (e) => e.target.setStyle({ weight: 3, color: '#1a0303' }));
+    layer.on('mouseout',  (e) => e.target.setStyle({ weight: 2, color: '#3b0a0a' }));
   };
 
   return (
