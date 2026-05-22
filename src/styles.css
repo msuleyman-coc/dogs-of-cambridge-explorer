@@ -289,19 +289,21 @@ input[type=range]::-moz-range-thumb {
 
 /* Always-on neighborhood name labels rendered on each polygon. */
 .leaflet-tooltip.nb-label {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(40, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(40, 0, 0, 0.22);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  color: #2a0606;
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  color: #1a0303;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
   text-transform: none;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 6px;
   pointer-events: none;
   white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 .leaflet-tooltip.nb-label::before { display: none; }
 
