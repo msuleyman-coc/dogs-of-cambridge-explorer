@@ -76,7 +76,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---------- Main grid ---------- */
 .main {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 12px;
   padding: 12px;
   min-height: 0;
@@ -85,10 +85,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .main { grid-template-columns: 1fr; }
 }
 
-/* Right column: map and charts share the vertical space evenly so neither
-   panel overwhelms the other. Each panel scrolls its own overflow. */
-.col > .map-wrap { flex: 1 1 0; min-height: 340px; }
-.col > .panel.charts-panel { flex: 1 1 0; min-height: 320px; }
+/* Right column: give the map most of the vertical space, charts get the
+   remainder. Each panel scrolls its own overflow. */
+.col > .map-wrap { flex: 1.6 1 0; min-height: 360px; }
+.col > .panel.charts-panel { flex: 1 1 0; min-height: 300px; }
 
 .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
@@ -113,7 +113,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- Map ---------- */
 .map-wrap { position: relative; flex: 1; min-height: 0; padding: 0; overflow: hidden; }
-.map-wrap .leaflet-container { width: 100%; height: 100%; background: #0b1424; border-radius: 18px; }
+.map-wrap .leaflet-container { width: 100%; height: 100%; background: #f4f5f7; border-radius: 18px; }
 .map-overlay {
   position: absolute; top: 12px; left: 12px;
   background: rgba(15,22,36, 0.7); border: 1px solid var(--border);

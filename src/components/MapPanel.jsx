@@ -48,10 +48,12 @@ export default function MapPanel({ dogs }) {
     const c = counts.get(name) || 0;
     const t = maxCount > 0 ? c / maxCount : 0;
     return {
-      color: '#0b1424',
+      color: '#7a1f1f',
       weight: 1,
       fillColor: shade(t),
-      fillOpacity: c > 0 ? 0.55 + t * 0.35 : 0.08
+      // Opacity scales with density too, so high-count areas read as a
+      // clearly darker red against the light basemap.
+      fillOpacity: c > 0 ? 0.55 + t * 0.40 : 0.05
     };
   };
 
@@ -69,7 +71,7 @@ export default function MapPanel({ dogs }) {
     <div className="panel map-wrap">
       <MapContainer center={CAMBRIDGE_CENTER} zoom={13} scrollWheelZoom>
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; OpenStreetMap &copy; CARTO'
         />
         {geo && (
@@ -145,14 +147,16 @@ function toFeatureCollection(data) {
   return { type: 'FeatureCollection', features: [] };
 }
 
-// Sequential blue → orange → red ramp, t in [0, 1].
+// Sequential white → deep red density ramp (ColorBrewer Reds), t in [0, 1].
+// One continuous hue so the only visual variable is lightness/saturation
+// driven by density.
 function shade(t) {
   const stops = [
-    [0.00, [44, 62, 95]],     // deep slate (low/empty)
-    [0.25, [124, 199, 255]],  // cool blue
-    [0.55, [255, 207, 107]],  // amber
-    [0.80, [255, 138, 76]],   // orange
-    [1.00, [255, 92, 138]]    // hot pink-red
+    [0.00, [255, 245, 240]], // near-white
+    [0.25, [252, 187, 161]],
+    [0.50, [251, 106,  74]],
+    [0.75, [222,  45,  38]],
+    [1.00, [127,   0,  18]]  // deep red
   ];
   for (let i = 1; i < stops.length; i++) {
     const [t1, c1] = stops[i - 1];
