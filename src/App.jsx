@@ -212,10 +212,6 @@ export default function App() {
           <FilterDrawer
             filters={filters}
             setFilters={setFilters}
-            breeds={breedList}
-            neighborhoods={neighborhoodList}
-            onReset={resetFilters}
-            onSurprise={surprise}
           />
           <TimelinePanel
             year={filters.expirationYear}
@@ -225,15 +221,12 @@ export default function App() {
             setPlaying={setPlaying}
             bucketCounts={expirationBuckets}
           />
-          <StoryScrubber chapter={chapter} setChapter={setChapter} applyChapter={applyChapter} />
         </div>
 
         <div className="col" style={{ minWidth: 0 }}>
           <MapPanel dogs={filteredDogs} />
           <ChartsPanel
             stats={stats}
-            baselineStats={baselineStats}
-            metric={filters.chartMetric}
             dogs={filteredDogs}
           />
         </div>
