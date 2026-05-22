@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Tooltip as LTooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { CAMBRIDGE_CENTER, NEIGHBORHOODS_GEOJSON_URL } from '../data/location.js';
 
 // Choropleth map: shade each Cambridge neighborhood polygon by the count
@@ -85,13 +86,16 @@ export default function MapPanel({ dogs }) {
           attribution='&copy; OpenStreetMap &copy; CARTO'
         />
         {geo && (
-          <GeoJSON
-            // Re-render when counts change so style() picks up new values.
-            key={`geo-${maxCount}-${counts.size}-${dogs.length}`}
-            data={geo}
-            style={style}
-            onEachFeature={onEachFeature}
-          />
+          <>
+            <FitToGeo geo={geo} />
+            <GeoJSON
+              // Re-render when counts change so style() picks up new values.
+              key={`geo-${maxCount}-${counts.size}-${dogs.length}`}
+              data={geo}
+              style={style}
+              onEachFeature={onEachFeature}
+            />
+          </>
         )}
       </MapContainer>
 
@@ -113,6 +117,23 @@ export default function MapPanel({ dogs }) {
       )}
     </div>
   );
+}
+
+// Fit the map viewport to the loaded neighborhood polygons so Cambridge
+// fills the panel regardless of container size.
+function FitToGeo({ geo }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!geo) return;
+    try {
+      const layer = L.geoJSON(geo);
+      const bounds = layer.getBounds();
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
+    } catch { /* ignore */ }
+  }, [geo, map]);
+  return null;
 }
 
 function ChoroplethLegend({ max }) {
