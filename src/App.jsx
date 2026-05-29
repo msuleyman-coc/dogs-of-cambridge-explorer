@@ -84,13 +84,17 @@ export default function App() {
   }, [dogs, baselineStats]);
 
   // ---- Available expiration years + per-year counts for the year picker ----
-  const expirationYears = useMemo(() => uniqueExpirationYears(taggedDogs), [taggedDogs]);
+  // Only consider 2020 onward; older licenses aren't relevant to the dashboard.
+  const expirationYears = useMemo(
+    () => uniqueExpirationYears(taggedDogs).filter((y) => y >= 2020),
+    [taggedDogs]
+  );
   const expirationBuckets = useMemo(() => {
     if (!expirationYears.length) return [];
     const counts = new Map();
     for (const d of taggedDogs) {
       const y = d.expirationYear;
-      if (y == null) continue;
+      if (y == null || y < 2020) continue;
       counts.set(y, (counts.get(y) || 0) + 1);
     }
     const min = expirationYears[0];
